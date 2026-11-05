@@ -11,6 +11,7 @@ let mappedUrl = '';
 let targets = new Map();
 let lastSubmissionBefore = null;
 let queue = Promise.resolve();
+let apiAuth;
 
 export function exclusive(fn) {
   const result = queue.then(fn);
@@ -64,8 +65,14 @@ export async function directLogin({ ra, digit, uf, password }) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.token) return { status: 'login_failed', http_status: response.status, message: data.statusRetorno || 'Authentication failed.' };
   const previous = await loadSession();
-  const persisted = await saveSession({ ...previous, apiAuth: { token: data.token, tokenResumo: data.tokenResumo, user: data.DadosUsuario, subscriptionKey, authenticatedAt: new Date().toISOString() } });
+  apiAuth = { token: data.token, tokenResumo: data.tokenResumo, user: data.DadosUsuario, subscriptionKey, authenticatedAt: new Date().toISOString() };
+  const persisted = await saveSession({ ...previous, apiAuth });
   return { status: persisted ? 'authenticated_api' : 'authenticated_api_ephemeral', profile_count: data.DadosUsuario?.PERFIS?.length || 0, user_id_present: !!data.DadosUsuario?.CD_USUARIO };
+}
+
+export async function apiSessionStatus() {
+  const auth = apiAuth || (await loadSession())?.apiAuth;
+  return { status: auth?.token ? 'authenticated_api' : 'login_required', profile_count: auth?.user?.PERFIS?.length || 0 };
 }
 
 async function challenge() {
