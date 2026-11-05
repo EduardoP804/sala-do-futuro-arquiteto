@@ -51,6 +51,10 @@ usuário presentes. Em produção, com `DATABASE_URL` e `SESSION_KEY`, o token
 atividades ainda não consome esse token; `direct_login` confirma apenas o
 acesso à API de autenticação.
 
+Sem banco configurado, o token fica somente na memória do processo e se perde
+quando o Render suspende o serviço. Este modo combina com pedir as credenciais
+em cada execução. `api_session_status` informa se há token em memória.
+
 Os arquivos públicos do aplicativo também referenciam `ValidarToken`,
 `Login/Token` e rotas de dados acadêmicos. A forma de usar o token nas rotas
 de tarefas deve ser medida em uma sessão autorizada antes de implementar a
