@@ -126,13 +126,14 @@ export async function probeHeadedTaskApi() {
   if (!auth?.token) throw new Error('Call direct_login first.');
   const display = ':77';
   let xvfbError = '';
+  let xvfbSpawnError = '';
   const xvfb = spawn('Xvfb', [display, '-screen', '0', '1280x800x24', '-nolisten', 'tcp'], { stdio: ['ignore', 'ignore', 'pipe'] });
-  xvfb.on('error', error => { xvfbError = error.message; });
+  xvfb.on('error', error => { xvfbSpawnError = error.message; });
   xvfb.stderr.on('data', chunk => { xvfbError = (xvfbError + chunk.toString()).slice(-500); });
   let probeBrowser;
   try {
     await new Promise(resolve => setTimeout(resolve, 1500));
-    if (xvfbError || xvfb.exitCode !== null) return { stage: 'xvfb', error: xvfbError || `exit_${xvfb.exitCode}` };
+    if (xvfbSpawnError || xvfb.exitCode !== null) return { stage: 'xvfb', error: xvfbSpawnError || xvfbError || `exit_${xvfb.exitCode}` };
     probeBrowser = await chromium.launch({ headless: false, env: { ...process.env, DISPLAY: display }, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
     const probePage = await probeBrowser.newPage();
     const landing = await probePage.goto('https://edusp-api.ip.tv/', { waitUntil: 'domcontentloaded', timeout: 30000 });
