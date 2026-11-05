@@ -12,6 +12,7 @@ let targets = new Map();
 let lastSubmissionBefore = null;
 let queue = Promise.resolve();
 let apiAuth;
+let gatewayPage;
 
 export function exclusive(fn) {
   const result = queue.then(fn);
@@ -90,6 +91,46 @@ export async function diagnoseTaskApi() {
     await saveSession({ ...(await loadSession()), apiAuth });
   }
   return { http_status: response.status, server: response.headers.get('server') || null, challenge_page: response.status === 403 && type.includes('html'), task_token_ready: !!apiAuth?.iptvToken };
+}
+
+export async function inspectTaskGateway() {
+  const auth = apiAuth || (await loadSession())?.apiAuth;
+  if (!auth?.token) throw new Error('Call direct_login first.');
+  await ensureBrowser();
+  if (gatewayPage && !gatewayPage.isClosed()) await gatewayPage.close();
+  gatewayPage = await context.newPage();
+  const integration = new URL('https://cmspweb.ip.tv/integration');
+  integration.searchParams.set('provider', 'seducsp_token');
+  integration.searchParams.set('token', auth.token);
+  let response;
+  let navigationError = null;
+  try {
+    response = await gatewayPage.goto(integration.href, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  } catch (error) {
+    navigationError = error.name;
+  }
+  await gatewayPage.waitForTimeout(5000);
+  const body = await gatewayPage.locator('body').innerText({ timeout: 5000 }).catch(() => '');
+  const controls = await gatewayPage.locator('input, button, iframe').evaluateAll(elements =>
+    elements.slice(0, 25).map(el => ({
+      tag: el.tagName.toLowerCase(),
+      type: el.getAttribute('type'),
+      text: (el.innerText || el.getAttribute('aria-label') || '').trim().slice(0, 100),
+      visible: !!(el.getBoundingClientRect().width && el.getBoundingClientRect().height)
+    }))
+  ).catch(() => []);
+  const screenshot = (await gatewayPage.screenshot({ type: 'png', fullPage: false })).toString('base64');
+  return {
+    metadata: {
+      http_status: response?.status() || null,
+      navigation_error: navigationError,
+      final_host: new URL(gatewayPage.url()).hostname,
+      title: (await gatewayPage.title()).slice(0, 120),
+      body_excerpt: body.slice(0, 700),
+      controls
+    },
+    screenshot
+  };
 }
 
 async function challenge() {
