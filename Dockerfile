@@ -4,5 +4,6 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 COPY src ./src
 ENV NODE_ENV=production
-CMD ["node", "src/server.js"]
+ENV SDF_HEADED=1
+CMD ["xvfb-run", "-a", "node", "src/server.js"]
 
