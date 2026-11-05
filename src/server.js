@@ -39,6 +39,7 @@ function getServer() {
   server.registerTool('api_session_status', { description: 'Report whether direct API authentication is available, without revealing credentials or tokens.', inputSchema: {} }, withBrowser(browser.apiSessionStatus));
   server.registerTool('diagnose_task_api', { description: 'Check whether the official task API accepts the current SED session from this server; returns only status metadata.', inputSchema: {} }, withBrowser(browser.diagnoseTaskApi));
   server.registerTool('diagnose_sed_task_token', { description: 'Test the official SED task integration token endpoint with available login token variants; never returns token values.', inputSchema: {} }, withBrowser(browser.diagnoseSedTaskToken));
+  server.registerTool('probe_headed_task_api', { description: 'Test the official task API in a headed Chromium on a temporary virtual display inside Render; returns status and counts only.', inputSchema: {} }, withBrowser(browser.probeHeadedTaskApi));
   server.registerTool('inspect_task_gateway', { description: 'Open the task integration in this Render Chromium session and inspect a possible security challenge. Returns redacted metadata and a screenshot.', inputSchema: {} }, async () => {
     try {
       const data = await browser.exclusive(browser.inspectTaskGateway);
