@@ -1,12 +1,12 @@
 # Sala do Futuro Remote MCP
 
-Node/Playwright server for a private Render web service. A request wakes a sleeping free service. The browser runs headlessly and loads encrypted session state from Postgres. The server never stores the student's password. CAPTCHA and other interactive challenges require the user to take over; no bypass is implemented.
+Node/Playwright server for a Render web service. A request wakes a sleeping free service. `direct_login` uses a temporary headless browser for public API configuration and authenticates by HTTPS request; the token stays in process memory. Optional Postgres persistence encrypts session state. The server never stores the student's password. CAPTCHA and other interactive challenges require the user to take over; no bypass is implemented.
 
 ## Runtime configuration
 
 - `MCP_TOKEN`: random high-entropy bearer token for the private MCP endpoint.
-- `SESSION_KEY`: 32 random bytes encoded as base64; used for AES-256-GCM encryption of the browser state.
-- `DATABASE_URL`: Render Postgres connection URL. A free Render database expires after 30 days, so it is a test environment rather than durable production storage.
+- `SESSION_KEY`: optional with `DATABASE_URL`; 32 random bytes encoded as base64 for AES-256-GCM encryption.
+- `DATABASE_URL`: optional Render Postgres connection URL. Without it, login state is lost when the process restarts. A free Render database expires after 30 days.
 - `PORT`: set by Render.
 
 Deploy the Dockerfile as a Render web service. It binds to `0.0.0.0:$PORT`. The service exposes `/health` and authenticated `/mcp`. Do not commit credentials or session state. Configure the plugin's remote MCP connection with the HTTPS `/mcp` URL and API-key bearer authentication. Use `bootstrap_login` once to create the server-side session, then `open_session` to check it after cold starts.
