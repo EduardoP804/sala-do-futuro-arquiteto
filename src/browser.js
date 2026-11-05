@@ -160,8 +160,17 @@ export async function probeHeadedTaskApi() {
         for (const category of room.group_categories || []) if (category.id) params.append('publication_target', String(category.id));
       }
       const taskResponse = await fetch(`/tms/task/todo?${params}`, { headers, signal: AbortSignal.timeout(20000) });
+      const taskType = taskResponse.headers.get('content-type') || '';
       const tasks = taskResponse.ok ? await taskResponse.json().catch(() => null) : null;
-      return { exchange_status: exchange.status, token_ready: true, room_status: roomResponse.status, room_count: rooms.length, task_status: taskResponse.status, task_count: Array.isArray(tasks) ? tasks.length : null };
+      const failedBody = taskResponse.ok ? '' : await taskResponse.text().catch(() => '');
+      const minimalResponse = taskResponse.ok ? null : await fetch('/tms/task/todo?limit=1&offset=0', { headers, signal: AbortSignal.timeout(20000) });
+      return {
+        exchange_status: exchange.status, token_ready: true, room_status: roomResponse.status, room_count: rooms.length,
+        task_status: taskResponse.status, task_type: taskType.split(';')[0], task_challenge: /just a moment|performing security verification|cloudflare/i.test(failedBody),
+        task_count: Array.isArray(tasks) ? tasks.length : null,
+        minimal_task_status: minimalResponse?.status ?? null,
+        minimal_task_type: minimalResponse?.headers.get('content-type')?.split(';')[0] ?? null
+      };
     }, auth.token);
     return { stage: 'complete', landing_status: landing?.status() || null, final_host: new URL(probePage.url()).hostname, title: (await probePage.title()).slice(0, 100), ...result };
   } finally {
