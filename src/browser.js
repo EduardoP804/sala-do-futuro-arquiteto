@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { spawn } from 'node:child_process';
 import { loadSession, saveSession } from './state.js';
 
 const ORIGIN = 'https://saladofuturo.educacao.sp.gov.br';
@@ -118,6 +119,54 @@ export async function diagnoseSedTaskToken() {
     results.push({ variant, http_status: response.status, content_type: type.split(';')[0], body_kind: body.startsWith('{') ? 'object' : body.startsWith('[') ? 'array' : 'text', nonempty: body.length > 0 });
   }
   return { results };
+}
+
+export async function probeHeadedTaskApi() {
+  const auth = apiAuth || (await loadSession())?.apiAuth;
+  if (!auth?.token) throw new Error('Call direct_login first.');
+  const display = ':77';
+  let xvfbError = '';
+  const xvfb = spawn('Xvfb', [display, '-screen', '0', '1280x800x24', '-nolisten', 'tcp'], { stdio: ['ignore', 'ignore', 'pipe'] });
+  xvfb.on('error', error => { xvfbError = error.message; });
+  xvfb.stderr.on('data', chunk => { xvfbError = (xvfbError + chunk.toString()).slice(-500); });
+  let probeBrowser;
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    if (xvfbError || xvfb.exitCode !== null) return { stage: 'xvfb', error: xvfbError || `exit_${xvfb.exitCode}` };
+    probeBrowser = await chromium.launch({ headless: false, env: { ...process.env, DISPLAY: display }, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+    const probePage = await probeBrowser.newPage();
+    const landing = await probePage.goto('https://edusp-api.ip.tv/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await probePage.waitForTimeout(12000);
+    const result = await probePage.evaluate(async sedToken => {
+      const exchange = await fetch('/registration/edusp/token', {
+        method: 'POST', signal: AbortSignal.timeout(20000),
+        headers: { 'content-type': 'application/json', 'x-api-platform': 'webclient', 'x-api-realm': 'edusp' },
+        body: JSON.stringify({ token: sedToken })
+      });
+      const type = exchange.headers.get('content-type') || '';
+      const data = type.includes('json') ? await exchange.json().catch(() => ({})) : {};
+      if (!exchange.ok || !data.auth_token) return { exchange_status: exchange.status, exchange_type: type.split(';')[0], token_ready: false };
+      const headers = { 'x-api-key': data.auth_token, 'x-api-platform': 'webclient', 'x-api-realm': 'edusp' };
+      const roomResponse = await fetch('/room/user?list_all=true&with_cards=true', { headers, signal: AbortSignal.timeout(20000) });
+      const roomData = roomResponse.ok ? await roomResponse.json().catch(() => ({})) : {};
+      const rooms = Array.isArray(roomData.rooms) ? roomData.rooms : [];
+      const params = new URLSearchParams({ expired_only: 'false', limit: '100', offset: '0', filter_expired: 'true', is_exam: 'false', with_answer: 'true', is_essay: 'false', with_apply_moment: 'true' });
+      for (const room of rooms) {
+        if (room.name) {
+          params.append('publication_target', room.name);
+          if (data.nick) params.append('publication_target', `${room.name}:${data.nick}`);
+        }
+        for (const category of room.group_categories || []) if (category.id) params.append('publication_target', String(category.id));
+      }
+      const taskResponse = await fetch(`/tms/task/todo?${params}`, { headers, signal: AbortSignal.timeout(20000) });
+      const tasks = taskResponse.ok ? await taskResponse.json().catch(() => null) : null;
+      return { exchange_status: exchange.status, token_ready: true, room_status: roomResponse.status, room_count: rooms.length, task_status: taskResponse.status, task_count: Array.isArray(tasks) ? tasks.length : null };
+    }, auth.token);
+    return { stage: 'complete', landing_status: landing?.status() || null, final_host: new URL(probePage.url()).hostname, title: (await probePage.title()).slice(0, 100), ...result };
+  } finally {
+    if (probeBrowser) await probeBrowser.close().catch(() => {});
+    xvfb.kill();
+  }
 }
 
 export async function inspectTaskGateway() {
