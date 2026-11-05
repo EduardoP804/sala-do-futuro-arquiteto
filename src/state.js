@@ -9,7 +9,6 @@ if (key && key.length !== 32) throw new Error('SESSION_KEY must be 32 random byt
 
 async function db() {
   if (!process.env.DATABASE_URL) {
-    if (process.env.NODE_ENV === 'production') throw new Error('DATABASE_URL is required in production.');
     return null;
   }
   if (!pool) pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 2, connectionTimeoutMillis: 10000 });
