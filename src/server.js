@@ -44,6 +44,12 @@ function getServer() {
       return { content: [{ type: 'text', text: JSON.stringify(data.metadata) }, { type: 'image', data: data.screenshot, mimeType: 'image/png' }] };
     } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
   });
+  server.registerTool('wait_task_gateway', { description: 'Wait on the existing remote integration page without reloading it, then inspect its state.', inputSchema: { seconds: z.number().int().min(1).max(30).optional() } }, async args => {
+    try {
+      const data = await browser.exclusive(() => browser.waitTaskGateway(args));
+      return { content: [{ type: 'text', text: JSON.stringify(data.metadata) }, { type: 'image', data: data.screenshot, mimeType: 'image/png' }] };
+    } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
+  });
   server.registerTool('navigate_to', { description: 'Navigate within the official Sala do Futuro origin.', inputSchema: { url: z.string().min(1) } }, withBrowser(({ url }) => browser.navigate(url)));
   server.registerTool('scan_environment', { description: 'Map visible interactive elements to temporary IDs.', inputSchema: {} }, withBrowser(browser.scan));
   server.registerTool('extract_content', { description: 'Extract visible activity text, question candidates and media metadata.', inputSchema: {} }, withBrowser(browser.extract));
