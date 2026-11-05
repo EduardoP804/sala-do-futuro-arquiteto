@@ -29,4 +29,23 @@ seus termos descrevem autenticação direta nas plataformas oficiais, sem
 documentar endpoints ou protocolos. Não há base verificada para replicar
 um login por token sem navegador.
 
+## Pesquisa do protocolo oficial (04/11/2026)
+
+O aplicativo web oficial envia `POST` para
+`https://sedintegracoes.educacao.sp.gov.br/saladofuturobffapi/credenciais/api/LoginCompletoToken`
+com JSON contendo `user` e `senha`. Em um teste com dados fictícios, `user`
+foi formado como RA + dígito + UF. A chamada inclui o cabeçalho
+`Ocp-Apim-Subscription-Key`; sem ele, a API responde que falta uma chave de
+assinatura. O mesmo teste com a chave capturada da aplicação pública,
+executado por `fetch` no Node sem navegador, recebeu `401` com a resposta
+normal de credenciais inválidas. Isso confirma que a requisição direta
+chega à lógica de login; ainda não confirma autenticação real nem o formato
+da resposta de sucesso. Não registre valores da chave, senha ou token.
+
+Os arquivos públicos do aplicativo também referenciam `ValidarToken`,
+`Login/Token` e rotas de dados acadêmicos. A forma de usar o token nas rotas
+de tarefas deve ser medida em uma sessão autorizada antes de implementar a
+integração direta. Não deduza a estrutura de respostas a partir dos nomes
+dessas rotas.
+
 
