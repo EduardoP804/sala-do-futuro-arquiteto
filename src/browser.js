@@ -75,6 +75,23 @@ export async function apiSessionStatus() {
   return { status: auth?.token ? 'authenticated_api' : 'login_required', profile_count: auth?.user?.PERFIS?.length || 0 };
 }
 
+export async function diagnoseTaskApi() {
+  const auth = apiAuth || (await loadSession())?.apiAuth;
+  if (!auth?.token) throw new Error('Call direct_login first.');
+  const response = await fetch('https://edusp-api.ip.tv/registration/edusp/token', {
+    method: 'POST', signal: AbortSignal.timeout(20000),
+    headers: { 'content-type': 'application/json', accept: 'application/json', 'x-api-platform': 'webclient', 'x-api-realm': 'edusp', origin: ORIGIN, referer: `${ORIGIN}/` },
+    body: JSON.stringify({ token: auth.token })
+  });
+  const type = response.headers.get('content-type') || '';
+  const data = type.includes('json') ? await response.json().catch(() => ({})) : {};
+  if (response.ok && data.auth_token) {
+    apiAuth = { ...auth, iptvToken: data.auth_token, nick: data.nick };
+    await saveSession({ ...(await loadSession()), apiAuth });
+  }
+  return { http_status: response.status, server: response.headers.get('server') || null, challenge_page: response.status === 403 && type.includes('html'), task_token_ready: !!apiAuth?.iptvToken };
+}
+
 async function challenge() {
   return await page.evaluate(() => /captcha|verifique que voc[eê] [eé] humano/i.test(document.body.innerText) || !!document.querySelector('iframe[src*="captcha"],iframe[src*="recaptcha"],iframe[src*="hcaptcha"]'));
 }
@@ -207,4 +224,6 @@ export async function verify() {
   const changed = !!lastSubmissionBefore && (page.url() !== lastSubmissionBefore.url || body !== lastSubmissionBefore.body);
   return { url: page.url(), status: changed && success && (!priorSuccess || page.url() !== lastSubmissionBefore.url) ? 'confirmed' : changed && error ? 'error_visible' : 'unconfirmed', challenge_detected: await challenge() };
 }
+
+
 
