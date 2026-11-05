@@ -93,6 +93,33 @@ export async function diagnoseTaskApi() {
   return { http_status: response.status, server: response.headers.get('server') || null, challenge_page: response.status === 403 && type.includes('html'), task_token_ready: !!apiAuth?.iptvToken };
 }
 
+export async function diagnoseSedTaskToken() {
+  const auth = apiAuth || (await loadSession())?.apiAuth;
+  if (!auth?.token) throw new Error('Call direct_login first.');
+  const endpoint = 'https://sedintegracoes.educacao.sp.gov.br/saladofuturobffapi/integracoes/Token?plataforma=TarefaSP';
+  const variants = [
+    ['login_token', auth.token],
+    ['summary_token', auth.tokenResumo]
+  ].filter(([, value]) => typeof value === 'string' && value.length > 0);
+  const results = [];
+  for (const [variant, value] of variants) {
+    const response = await fetch(endpoint, {
+      signal: AbortSignal.timeout(15000),
+      headers: {
+        accept: 'application/json',
+        authorization: `Bearer ${value}`,
+        'ocp-apim-subscription-key': auth.subscriptionKey,
+        'x-product-name': 'SalaDoFuturo',
+        origin: ORIGIN
+      }
+    });
+    const type = response.headers.get('content-type') || '';
+    const body = await response.text();
+    results.push({ variant, http_status: response.status, content_type: type.split(';')[0], body_kind: body.startsWith('{') ? 'object' : body.startsWith('[') ? 'array' : 'text', nonempty: body.length > 0 });
+  }
+  return { results };
+}
+
 export async function inspectTaskGateway() {
   const auth = apiAuth || (await loadSession())?.apiAuth;
   if (!auth?.token) throw new Error('Call direct_login first.');
