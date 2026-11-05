@@ -37,6 +37,7 @@ function getServer() {
   server.registerTool('bootstrap_login', { description: 'One-time student login. Credentials are used only for this call and are not stored; encrypted browser state is persisted.', inputSchema: { ra: z.string().min(1), digit: z.string().min(1), password: z.string().min(1) } }, withBrowser(browser.bootstrapLogin));
   server.registerTool('direct_login', { description: 'Authenticate through the official SEDUC-SP API without opening a visible window. Retains the token in process memory; does not store the password.', inputSchema: { ra: z.string().min(1), digit: z.string().min(1), uf: z.string().length(2), password: z.string().min(1) } }, withBrowser(browser.directLogin));
   server.registerTool('api_session_status', { description: 'Report whether direct API authentication is available, without revealing credentials or tokens.', inputSchema: {} }, withBrowser(browser.apiSessionStatus));
+  server.registerTool('diagnose_task_api', { description: 'Check whether the official task API accepts the current SED session from this server; returns only status metadata.', inputSchema: {} }, withBrowser(browser.diagnoseTaskApi));
   server.registerTool('navigate_to', { description: 'Navigate within the official Sala do Futuro origin.', inputSchema: { url: z.string().min(1) } }, withBrowser(({ url }) => browser.navigate(url)));
   server.registerTool('scan_environment', { description: 'Map visible interactive elements to temporary IDs.', inputSchema: {} }, withBrowser(browser.scan));
   server.registerTool('extract_content', { description: 'Extract visible activity text, question candidates and media metadata.', inputSchema: {} }, withBrowser(browser.extract));
@@ -67,4 +68,6 @@ app.delete('/mcp', authorized, (_req, res) => res.status(405).end());
 
 const port = Number(process.env.PORT || 10000);
 app.listen(port, '0.0.0.0', () => console.error(`MCP listening on ${port}`));
+
+
 
