@@ -38,6 +38,12 @@ function getServer() {
   server.registerTool('direct_login', { description: 'Authenticate through the official SEDUC-SP API without opening a visible window. Retains the token in process memory; does not store the password.', inputSchema: { ra: z.string().min(1), digit: z.string().min(1), uf: z.string().length(2), password: z.string().min(1) } }, withBrowser(browser.directLogin));
   server.registerTool('api_session_status', { description: 'Report whether direct API authentication is available, without revealing credentials or tokens.', inputSchema: {} }, withBrowser(browser.apiSessionStatus));
   server.registerTool('diagnose_task_api', { description: 'Check whether the official task API accepts the current SED session from this server; returns only status metadata.', inputSchema: {} }, withBrowser(browser.diagnoseTaskApi));
+  server.registerTool('inspect_task_gateway', { description: 'Open the task integration in this Render Chromium session and inspect a possible security challenge. Returns redacted metadata and a screenshot.', inputSchema: {} }, async () => {
+    try {
+      const data = await browser.exclusive(browser.inspectTaskGateway);
+      return { content: [{ type: 'text', text: JSON.stringify(data.metadata) }, { type: 'image', data: data.screenshot, mimeType: 'image/png' }] };
+    } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
+  });
   server.registerTool('navigate_to', { description: 'Navigate within the official Sala do Futuro origin.', inputSchema: { url: z.string().min(1) } }, withBrowser(({ url }) => browser.navigate(url)));
   server.registerTool('scan_environment', { description: 'Map visible interactive elements to temporary IDs.', inputSchema: {} }, withBrowser(browser.scan));
   server.registerTool('extract_content', { description: 'Extract visible activity text, question candidates and media metadata.', inputSchema: {} }, withBrowser(browser.extract));
