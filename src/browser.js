@@ -133,6 +133,22 @@ export async function inspectTaskGateway() {
   };
 }
 
+export async function waitTaskGateway({ seconds = 25 } = {}) {
+  if (!gatewayPage || gatewayPage.isClosed()) throw new Error('Call inspect_task_gateway first.');
+  await gatewayPage.waitForTimeout(Math.min(Math.max(seconds, 1), 30) * 1000);
+  const body = await gatewayPage.locator('body').innerText({ timeout: 5000 }).catch(() => '');
+  const screenshot = (await gatewayPage.screenshot({ type: 'png', fullPage: false })).toString('base64');
+  return {
+    metadata: {
+      final_host: new URL(gatewayPage.url()).hostname,
+      title: (await gatewayPage.title()).slice(0, 120),
+      body_excerpt: body.slice(0, 700),
+      interactive_controls: await gatewayPage.locator('input:not([type="hidden"]), button, iframe').count()
+    },
+    screenshot
+  };
+}
+
 async function challenge() {
   return await page.evaluate(() => /captcha|verifique que voc[eê] [eé] humano/i.test(document.body.innerText) || !!document.querySelector('iframe[src*="captcha"],iframe[src*="recaptcha"],iframe[src*="hcaptcha"]'));
 }
