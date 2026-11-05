@@ -28,7 +28,7 @@ function assertOrigin() {
 async function ensureBrowser() {
   if (page && !page.isClosed()) return;
   const saved = await loadSession();
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+  browser = await chromium.launch({ headless: process.env.SDF_HEADED !== '1', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
   context = await browser.newContext({ viewport: { width: 1280, height: 800 }, acceptDownloads: false, ...(saved?.storageState ? { storageState: saved.storageState } : {}) });
   if (saved?.sessionStorage) {
     await context.addInitScript(({ origin, items }) => {
