@@ -38,9 +38,34 @@ async function ensureBrowser() {
 }
 
 async function persist() {
+  const previous = await loadSession();
   const storageState = await context.storageState({ indexedDB: true });
   const sessionStorage = await page.evaluate(() => Object.entries(sessionStorage));
-  await saveSession({ storageState, sessionStorage });
+  await saveSession({ ...previous, storageState, sessionStorage });
+}
+
+export async function directLogin({ ra, digit, uf, password }) {
+  if (!/^\d{1,12}$/.test(ra) || !/^[0-9Xx]$/.test(digit) || !/^[A-Z]{2}$/.test(uf)) throw new Error('Invalid RA, digit, or UF format.');
+  const probeBrowser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}), args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+  let subscriptionKey;
+  try {
+    const probePage = await probeBrowser.newPage();
+    const configRequest = probePage.waitForRequest(request => new URL(request.url()).pathname.endsWith('/api/configuracoes'), { timeout: 15000 });
+    await probePage.goto(`${ORIGIN}/login-alunos`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    subscriptionKey = (await configRequest).headers()['ocp-apim-subscription-key'];
+    if (!subscriptionKey) throw new Error('Official API configuration was not observed.');
+  } finally { await probeBrowser.close(); }
+  const response = await fetch('https://sedintegracoes.educacao.sp.gov.br/saladofuturobffapi/credenciais/api/LoginCompletoToken', {
+    method: 'POST',
+    signal: AbortSignal.timeout(20000),
+    headers: { 'content-type': 'application/json', 'ocp-apim-subscription-key': subscriptionKey, 'x-product-name': 'SalaDoFuturo', origin: ORIGIN },
+    body: JSON.stringify({ user: ra + digit + uf, senha: password })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.token) return { status: 'login_failed', http_status: response.status, message: data.statusRetorno || 'Authentication failed.' };
+  const previous = await loadSession();
+  const persisted = await saveSession({ ...previous, apiAuth: { token: data.token, tokenResumo: data.tokenResumo, user: data.DadosUsuario, subscriptionKey, authenticatedAt: new Date().toISOString() } });
+  return { status: persisted ? 'authenticated_api' : 'authenticated_api_ephemeral', profile_count: data.DadosUsuario?.PERFIS?.length || 0, user_id_present: !!data.DadosUsuario?.CD_USUARIO };
 }
 
 async function challenge() {
