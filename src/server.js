@@ -6,8 +6,8 @@ import { z } from 'zod';
 import * as browser from './browser.js';
 
 const token = process.env.MCP_TOKEN || '';
-if (process.env.NODE_ENV === 'production' && (!token || !process.env.DATABASE_URL || !process.env.SESSION_KEY)) {
-  throw new Error('MCP_TOKEN, DATABASE_URL, and SESSION_KEY are required in production.');
+if (process.env.NODE_ENV === 'production' && !token) {
+  throw new Error('MCP_TOKEN is required in production.');
 }
 
 const app = createMcpExpressApp({ host: '0.0.0.0' });
@@ -35,7 +35,8 @@ function getServer() {
   const server = new McpServer({ name: 'sala-do-futuro-remote', version: '0.1.0' });
   server.registerTool('open_session', { description: 'Open the headless Sala do Futuro browser and report login state.', inputSchema: {} }, withBrowser(browser.openSession));
   server.registerTool('bootstrap_login', { description: 'One-time student login. Credentials are used only for this call and are not stored; encrypted browser state is persisted.', inputSchema: { ra: z.string().min(1), digit: z.string().min(1), password: z.string().min(1) } }, withBrowser(browser.bootstrapLogin));
-  server.registerTool('direct_login', { description: 'Authenticate through the official SEDUC-SP API without opening a visible window. Stores the returned token encrypted; does not store the password.', inputSchema: { ra: z.string().min(1), digit: z.string().min(1), uf: z.string().length(2), password: z.string().min(1) } }, withBrowser(browser.directLogin));
+  server.registerTool('direct_login', { description: 'Authenticate through the official SEDUC-SP API without opening a visible window. Retains the token in process memory; does not store the password.', inputSchema: { ra: z.string().min(1), digit: z.string().min(1), uf: z.string().length(2), password: z.string().min(1) } }, withBrowser(browser.directLogin));
+  server.registerTool('api_session_status', { description: 'Report whether direct API authentication is available, without revealing credentials or tokens.', inputSchema: {} }, withBrowser(browser.apiSessionStatus));
   server.registerTool('navigate_to', { description: 'Navigate within the official Sala do Futuro origin.', inputSchema: { url: z.string().min(1) } }, withBrowser(({ url }) => browser.navigate(url)));
   server.registerTool('scan_environment', { description: 'Map visible interactive elements to temporary IDs.', inputSchema: {} }, withBrowser(browser.scan));
   server.registerTool('extract_content', { description: 'Extract visible activity text, question candidates and media metadata.', inputSchema: {} }, withBrowser(browser.extract));
