@@ -1,0 +1,19 @@
+services:
+  mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:10000:10000"
+    environment:
+      NODE_ENV: production
+      PORT: "10000"
+      MCP_TOKEN: "${MCP_TOKEN:?Define MCP_TOKEN no arquivo .env da instancia}"
+      SESSION_KEY: "${SESSION_KEY:-}"
+    shm_size: "128mb"
+    mem_limit: 750m
+    memswap_limit: 1500m
+    security_opt:
+      - no-new-privileges:true
+    init: true
