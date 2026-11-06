@@ -2,4 +2,16 @@ node_modules
 .env
 *.zip
 *.log
-
+**/node_modules
+**/.env
+**/.env.*
+**/browser-profile
+**/agent-session-storage.json
+**/storage-state.json
+**/cookies.json
+**/*.pem
+**/*.key
+plugin-runtime
+*.zip
+*.tar
+*.tar.gz
