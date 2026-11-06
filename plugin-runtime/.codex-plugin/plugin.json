@@ -1,0 +1,22 @@
+{
+  "author": {
+    "name": "Eduardo"
+  },
+  "description": "Painel local de atividades SP e Khan Academy, com leitura e envio assistidos pelo ChatGPT.",
+  "interface": {
+    "capabilities": [
+      "Interactive"
+    ],
+    "category": "Education & Research",
+    "defaultPrompt": "Abra minha sess\u00e3o da Sala do Futuro, mapeie as atividades dispon\u00edveis e mostre o estado atual.",
+    "developerName": "Eduardo",
+    "displayName": "Sala do Futuro: Arquiteto",
+    "longDescription": "Abre um painel local para login, tarefas SP e atribui\u00e7\u00f5es Khan Academy. O ChatGPT l\u00ea, responde e confere tarefas pela sess\u00e3o local minimizada.",
+    "shortDescription": "Assistente da Sala do Futuro"
+  },
+  "keywords": [],
+  "mcpServers": "./.mcp.json",
+  "name": "sala-do-futuro-arquiteto",
+  "skills": "./skills",
+  "version": "0.7.3"
+}

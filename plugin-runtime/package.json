@@ -1,0 +1,7 @@
+{
+  "name": "sala-do-futuro-arquiteto-runtime",
+  "private": true,
+  "version": "0.7.2",
+  "type": "module",
+  "dependencies": { "playwright": "1.64.1" }
+}

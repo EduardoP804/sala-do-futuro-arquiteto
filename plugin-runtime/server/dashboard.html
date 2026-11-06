@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Sala do Futuro · Painel local</title>
+  <link rel="stylesheet" href="/dashboard.css">
+  <script src="/dashboard-client.js" defer></script>
+</head>
+<body>
+  <main class="layout">
+    <section class="left">
+      <div class="about">
+        <h1>Você sabe o que é a<br><strong>SALA DO FUTURO?</strong></h1>
+        <p>A <b>Sala do Futuro</b> nasceu para transformar a experiência educacional, conectando alunos, pais e responsáveis com recursos que simplificam e enriquecem o <b>processo de aprendizagem.</b></p>
+        <h2>Benefícios para os estudantes:</h2>
+        <ul>
+          <li><b>Acesso centralizado:</b> informações sobre boletins, frequência, tarefas e agenda escolar.</li>
+          <li><b>Recursos educativos:</b> materiais das aulas, bibliotecas virtuais e plataformas para redações e estudos.</li>
+          <li><b>Praticidade:</b> tudo em um só lugar, facilitando a organização da rotina escolar.</li>
+        </ul>
+        <h2>Benefícios para pais e responsáveis:</h2>
+        <ul>
+          <li><b>Transparência:</b> consulta ao boletim escolar, frequência e acompanhamento das tarefas.</li>
+          <li><b>Organização:</b> visão clara do calendário escolar e dos compromissos acadêmicos.</li>
+        </ul>
+        <h2>Facilidade de Uso</h2>
+        <ol><li><b>Praticidade no acesso:</b> uso da mesma senha da SED para login, sem necessidade de criar credenciais adicionais.</li></ol>
+        <p>A Sala do Futuro é mais do que um aplicativo; é uma ferramenta de conexão entre a comunidade escolar, promovendo a participação ativa na aprendizagem e o sucesso dos alunos.</p>
+      </div>
+      <footer>
+        <p>Sites da SEDUC-SP</p>
+        <div><a href="https://www.educacao.sp.gov.br/" target="_blank" rel="noopener noreferrer">Portal da Educação</a><span>•</span><a href="https://sed.educacao.sp.gov.br/" target="_blank" rel="noopener noreferrer">Secretaria Escolar Digital</a></div>
+        <p>Links Úteis</p>
+        <div><a href="https://www.educacao.sp.gov.br/" target="_blank" rel="noopener noreferrer">Portal da Educação</a></div>
+      </footer>
+    </section>
+    <section class="right">
+      <header class="topbar">
+        <div class="brand" aria-label="Sala do Futuro"><span class="brand-mark">✦</span><span>SALA DO<br>FUTURO</span></div>
+        <a href="https://saladofuturo.educacao.sp.gov.br/login-alunos" target="_blank" rel="noopener noreferrer">Precisa de ajuda? <b>Clique aqui</b></a>
+      </header>
+      <div class="steps"><span>escolher perfil</span><strong>realizar login</strong></div>
+      <div id="login-view" class="content">
+        <div class="intro"><h2>Estudante</h2><p>Preencha seus dados abaixo para acessar o sistema.</p></div>
+        <form id="login-form" autocomplete="on">
+          <div class="row">
+            <label class="field ra">RA<input name="ra" inputmode="numeric" pattern="[0-9]{1,12}" placeholder="Ex.: 186735683" required autocomplete="username"></label>
+            <label class="field digit">Dígito RA<input name="digit" maxlength="1" placeholder="0" required></label>
+            <label class="field uf">UF<select name="uf" required><option>SP</option><option>AC</option><option>AL</option><option>AM</option><option>AP</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MG</option><option>MS</option><option>MT</option><option>PA</option><option>PB</option><option>PE</option><option>PI</option><option>PR</option><option>RJ</option><option>RN</option><option>RO</option><option>RR</option><option>RS</option><option>SC</option><option>SE</option><option>TO</option></select></label>
+          </div>
+          <label class="field password">Senha<span class="password-wrap"><input name="password" type="password" placeholder="Digite sua senha" required autocomplete="current-password"><button type="button" id="show-password" aria-label="Mostrar senha">◉</button></span></label>
+          <p class="forgot">Esqueceu a senha? <a href="https://saladofuturo.educacao.sp.gov.br/login-alunos" target="_blank" rel="noopener noreferrer">Clique aqui</a> para saber como recuperá-la.</p>
+          <p id="message" class="message" role="status" aria-live="polite"></p>
+          <div class="actions"><button class="back" type="reset">Voltar</button><button class="primary" type="submit">Acessar</button></div>
+        </form>
+      </div>
+      <div id="dashboard-view" class="content dashboard" hidden>
+        <div class="intro"><h2>Minhas atividades</h2><p>Estado atual da sua conta</p></div>
+        <nav class="platform-tabs" aria-label="Plataforma">
+          <button id="tab-sp" class="platform active" type="button" aria-pressed="true"><span class="sp-logo">✦</span>Tarefas SP</button>
+          <button id="tab-khan" class="platform" type="button" aria-pressed="false"><span class="khan-logo">⬢</span>Khan Academy</button>
+        </nav>
+        <section id="tasks-panel">
+          <div class="summary" id="summary"></div>
+          <div class="dashboard-actions"><button id="refresh" class="primary">Atualizar</button><span id="refresh-status" role="status"></span></div>
+          <div id="activity-lists"></div>
+        </section>
+        <section id="khan-panel" hidden>
+          <div class="khan-card"><span class="khan-logo">⬢</span><div><strong>Khan Academy</strong><p id="khan-status">Conecte sua conta pelo acesso oficial da Sala do Futuro.</p></div></div>
+          <div class="dashboard-actions"><button id="khan-connect" class="primary">Conectar</button><button id="khan-refresh" class="back" hidden>Atualizar</button></div>
+          <div class="summary" id="khan-summary" hidden></div>
+          <div id="khan-lists"></div>
+        </section>
+      </div>
+      <div class="gov">🇧🇷<b>GOV.BR</b></div>
+    </section>
+  </main>
+</body>
+</html>
